@@ -1,4 +1,4 @@
-package com.poteapp.calculator;
+package com.poteapp.calculator.utils;
 
 import android.content.Context;
 import android.util.DisplayMetrics;

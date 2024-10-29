@@ -2,11 +2,14 @@ package com.poteapp.calculator;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.TypedValue;
-import android.view.Gravity;
+import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.poteapp.calculator.factories.ButtonFactory;
+import com.poteapp.calculator.factories.ResultTextViewFactory;
+import com.poteapp.calculator.utils.ScreenUtils;
 
 public class MainActivity extends Activity {
 
@@ -18,43 +21,57 @@ public class MainActivity extends Activity {
             ".", "0", ",", "=",
     };
 
-    private static final int PADDING_DP = 16;
-    private static final int MARGIN_DP = 16;
-    private static final int TEXT_SIZE_SP = 92;
+    private Calculator calculator;
+    private TextView resultTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        calculator = new Calculator();
+
         RelativeLayout mainLayout = findViewById(R.id.main_layout);
-        TextView resultTextView = createResultTextView();
+        resultTextView = ResultTextViewFactory.createResultTextView(this);
         mainLayout.addView(resultTextView);
 
         GridLayout buttonGridLayout = findViewById(R.id.button_grid);
         ButtonFactory.addButtonsToGrid(this, buttonGridLayout, BUTTON_TEXTS, ScreenUtils.getScreenWidthInDp(this));
+
+        setButtonListeners(buttonGridLayout);
     }
 
-    private TextView createResultTextView() {
-        TextView resultTextView = new TextView(this);
-        resultTextView.setText("0");
-        resultTextView.setTextSize(TEXT_SIZE_SP);
-        resultTextView.setGravity(Gravity.CENTER);
+    private void setButtonListeners(GridLayout buttonGridLayout) {
+        for (int i = 0; i < buttonGridLayout.getChildCount(); i++) {
+            Button button = (Button) buttonGridLayout.getChildAt(i);
+            button.setOnClickListener(v -> {
+                String buttonText = button.getText().toString();
+                handleButtonClick(buttonText);
+            });
+        }
+    }
 
-        int paddingPx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, PADDING_DP, getResources().getDisplayMetrics());
-        int marginPx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, MARGIN_DP, getResources().getDisplayMetrics());
-
-        resultTextView.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
-
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
-        );
-        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-        params.addRule(RelativeLayout.ABOVE, R.id.button_grid);
-        params.setMargins(marginPx, 0, marginPx, 0);
-        resultTextView.setLayoutParams(params);
-
-        return resultTextView;
+    private void handleButtonClick(String buttonText) {
+        switch (buttonText) {
+            case "C":
+                calculator.clear();
+                resultTextView.setText("0");
+                break;
+            case "+":
+            case "-":
+            case "*":
+            case "÷":
+                calculator.addOperator(buttonText);
+                resultTextView.setText(buttonText);
+                break;
+            case "=":
+                String result = calculator.calculate();
+                resultTextView.setText(result);
+                break;
+            default:
+                calculator.append(buttonText);
+                resultTextView.setText(calculator.getCurrentInput());
+                break;
+        }
     }
 }
